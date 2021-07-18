@@ -1,7 +1,22 @@
-import { ClassDecoratorFactory, PropertyDecoratorFactory } from "../decorator";
-export declare const Store: ClassDecoratorFactory;
-export declare const PrimaryKey: PropertyDecoratorFactory;
-export declare const Index: PropertyDecoratorFactory;
+declare type ClassDecoratorFactory = (...args: any) => (constructor: Function) => any;
+declare type PropertyDecoratorFactory = (...args: any) => (target: any, propertyKey: string) => any;
+interface IStoreDecorator extends ClassDecoratorFactory {
+    (args: {
+        name?: string;
+        database?: string;
+    }): (constructor: Function) => any;
+}
+interface IPrimaryKey extends PropertyDecoratorFactory {
+    (args: {
+        autoIncrement: boolean;
+    }): (target: any, propertyKey: string) => any;
+}
+interface IIndex extends PropertyDecoratorFactory {
+    (): (target: any, propertyKey: string) => any;
+}
+export declare const Store: IStoreDecorator;
+export declare const PrimaryKey: IPrimaryKey;
+export declare const Index: IIndex;
 export declare const getCollectedMetaInfo: () => {
     [x: string]: {
         store: string;
@@ -14,3 +29,4 @@ export declare const getCollectedMetaInfo: () => {
         type: Function;
     };
 };
+export {};

@@ -1,12 +1,23 @@
 /*https://saul-mirone.github.io/a-complete-guide-to-typescript-decorator/*/
 
 import {TStoreParameters} from "./indexeddb.config";
-import {ClassDecoratorFactory, PropertyDecoratorFactory} from "../decorator";
 
 type TMetaInfo = { store: string, database?: string } & TStoreParameters;
 const MetaInfo: Record<string, TMetaInfo & {type: Function}> = {};
 
-export const Store: ClassDecoratorFactory = (args: { name?: string, database?: string }) => {
+type ClassDecoratorFactory = (...args: any) => (constructor: Function) => any
+type PropertyDecoratorFactory = (...args: any) => (target: any, propertyKey: string) => any
+interface IStoreDecorator extends ClassDecoratorFactory {
+    (args: { name?: string, database?: string }) : (constructor: Function) => any
+}
+interface IPrimaryKey extends PropertyDecoratorFactory {
+    (args: { autoIncrement: boolean }) : (target: any, propertyKey: string) => any
+}
+interface IIndex extends PropertyDecoratorFactory {
+    () : (target: any, propertyKey: string) => any
+}
+
+export const Store: IStoreDecorator = (args: { name?: string, database?: string }) => {
     return (constructor: Function) => {
         const cfg = MetaInfo[constructor.name];
         MetaInfo[constructor.name] = {
@@ -20,7 +31,7 @@ export const Store: ClassDecoratorFactory = (args: { name?: string, database?: s
     }
 }
 
-export const PrimaryKey: PropertyDecoratorFactory = (args: { autoIncrement: boolean }) => {
+export const PrimaryKey: IPrimaryKey = (args: { autoIncrement: boolean }) => {
     return (target: any, propertyKey: string) => {
         const cfg = MetaInfo[target.constructor.name];
         const getKeyPath = () => {
@@ -38,7 +49,7 @@ export const PrimaryKey: PropertyDecoratorFactory = (args: { autoIncrement: bool
     }
 }
 
-export const Index: PropertyDecoratorFactory = () => {
+export const Index: IIndex = () => {
     return (target: any, propertyKey: string) => {
         const cfg = MetaInfo[target.constructor.name];
         const getIndices = () => {
