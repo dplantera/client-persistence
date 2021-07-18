@@ -2,7 +2,8 @@ import {Entity} from "./entities";
 import {IDBRepository} from "./repositories/IDBRepository";
 import {IDBClient} from "./driver/IDBClient";
 import {Newable} from "./repositories/interfaces";
-import {Index, PrimaryKey, Store} from "./driver/indexeddb.decorator";
+import {Index, Store} from "./driver/indexeddb.decorator";
+import {StoreConfig} from "./driver/indexeddb.config";
 
 require("fake-indexeddb/auto");
 
@@ -18,7 +19,7 @@ beforeEach(async () => {
 
 test('test crud operations on an object', async () => {
     type Data = { attrNum: number, attrStr: string } & Entity
-    const data: Data = {id:undefined, attrNum: 1, attrStr: "test"};
+    const data: Data = {id: undefined, attrNum: 1, attrStr: "test"};
     const storeData = new IDBRepository<Data>("data", indexedDbClient);
 
     // create
@@ -42,7 +43,7 @@ test('test crud operations on an object', async () => {
     expect(foundData.attrNum).toBe(2);
     expect(foundData.attrStr).toBe("test updated");
     // _id:undefined TS Workaround for IDB
-    const forUpdate = {id:undefined, ...foundData, attrStr: "test partial upt"};
+    const forUpdate = {id: undefined, ...foundData, attrStr: "test partial upt"};
     uptData = await storeData.update(forUpdate);
     expect(uptData).toBe(true);
 
@@ -64,7 +65,7 @@ test('create multiply objects of same type', async () => {
     const data: Data[] = [];
 
     for (let i = 0; i < 20; i++) {
-        data.push({id:undefined, attrNum: i, attrStr: "test-" + i})
+        data.push({id: undefined, attrNum: i, attrStr: "test-" + i})
     }
 
     const storeData = new IDBRepository<Data>("data", indexedDbClient);
@@ -94,18 +95,18 @@ test('create multiply objects and stores of different type', async () => {
     const dataTwoStore = new IDBRepository("data-two", indexedDbClient);
     const dataThreeStore = new IDBRepository("data-three", indexedDbClient);
 
-    const data: Data = {id:undefined, attrNum: 1, attrStr: "test data"};
+    const data: Data = {id: undefined, attrNum: 1, attrStr: "test data"};
 
     let created = await dataStore.create(data);
     expect(created.id).toBe(1);
     expect(dataStore.dbClient.version.get()).toBe(2);
 
-    const data2: DataTwo = {id:undefined, attrNum: 2};
+    const data2: DataTwo = {id: undefined, attrNum: 2};
     created = await dataTwoStore.create(data2);
     expect(created.id).toBe(1);
     expect(dataTwoStore.dbClient.version.get()).toBe(3);
 
-    const data3: DataThree = {id:undefined, attrNum: 3, attrBool: true};
+    const data3: DataThree = {id: undefined, attrNum: 3, attrBool: true};
     created = await dataThreeStore.create(data3);
     expect(created.id).toBe(1);
     expect(dataThreeStore.dbClient.version.get()).toBe(4);
@@ -135,9 +136,10 @@ test("class without decorator", async () => {
 test("class with decorator", async () => {
     @Store()
     class DataDecorated extends Entity {
-        attrNum:number;
+        attrNum: number;
         @Index()
-        attrStr:string;
+        attrStr: string;
+
         constructor(attrNum: number, attrStr: string) {
             super();
             this.attrNum = attrNum;
@@ -177,8 +179,26 @@ test("newable", () => {
     }
 
     const generic = new Generic<Data>(Data);
-    const obj = generic.transform({id:undefined, attrNum: 1, attrStr: "test-attr"})
+    const obj = generic.transform({id: undefined, attrNum: 1, attrStr: "test-attr"})
     expect(obj).toBeInstanceOf(Data)
+})
+
+
+test("test js context - manual store config", async () => {
+    const Foo = (id: number, partiakPk: string, data: string) => {
+        return {id: id, partialPk: partiakPk, data: data}
+    }
+    let fooStoreConfig = StoreConfig.getInstance().for(Foo.name);
+    fooStoreConfig.database = "test-foo-db";
+    fooStoreConfig.autoIncrement = false;
+    fooStoreConfig.keyPath = ["id", "partialPk"];
+
+    const fooRepo = new IDBRepository(Foo.name);
+    const foo = Foo(111, "ab", "test data");
+    await fooRepo.create(foo);
+
+    const fooGetDbResult = await fooRepo.getById([111, "ab"]);
+    expect(fooGetDbResult).toEqual(foo);
 })
 
 export {}

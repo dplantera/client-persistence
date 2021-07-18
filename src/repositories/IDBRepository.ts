@@ -74,7 +74,7 @@ export class IDBRepository<T extends Entity> implements IWrite<T>, IRead<T> {
     }
 
 
-    async getById(id: string | number): Promise<T> {
+    async getById(id: string | number | any[]): Promise<T> {
         const storeTransaction = await this.dbClient.storeTransaction(this.storeName);
         return new Promise(((resolve, reject) => {
             const request = storeTransaction.get(id);
@@ -89,7 +89,7 @@ export class IDBRepository<T extends Entity> implements IWrite<T>, IRead<T> {
         const storeTransaction = await this.dbClient.storeTransaction(this.storeName);
         return new Promise(((resolve, reject) => {
             const request = storeTransaction.getAll(query);
-            request.onsuccess = () => resolve(request.result.map(this.transform));
+            request.onsuccess = () => resolve(request.result.map(this.transform.bind(this)));
             request.onerror = () => {
                 reject(request.error)
             };

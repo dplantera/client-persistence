@@ -78,7 +78,7 @@ export class IDBClient {
         const dbName = params.database ?? this.getDbName(storeName);
         let db = await this.getDb(dbName);
         let dbVersionCurrent = this.version.get(dbName);
-        log.debug(" - version: " + (db.version ?? -1) + " | " + (dbVersionCurrent ?? -1))
+        log.debug((db.name ?? "") + " - version: " + (db.version ?? -1) + " | " + (dbVersionCurrent ?? -1))
         if (!dbVersionCurrent)
             dbVersionCurrent = db.version
 
