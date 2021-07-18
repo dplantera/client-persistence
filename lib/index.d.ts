@@ -4,4 +4,4 @@ import { IDBRepository } from "./repositories/IDBRepository";
 import { Entity } from "./entities";
 import { Index } from "./driver/indexeddb.decorator";
 import { Store } from "./driver/indexeddb.decorator";
-export { IDBClient, StoreConfig, IDBRepository, decorator, Entity, Index, Store };
+export { IDBClient, StoreConfig, IDBRepository, Entity, Index, Store };

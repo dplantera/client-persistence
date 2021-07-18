@@ -6,7 +6,7 @@ export type TStoreParameters =
     & { database: string, name?: string, indices?: Array<TStoreIndex> };
 
 export class StoreConfig {
-    public static readonly NAME_DB_DEFAULT = "default_db";
+    public static NAME_DB_DEFAULT = "default_db";
     private static instance: StoreConfig;
     private storeConfig: IStoreConfig;
 
@@ -34,6 +34,12 @@ export class StoreConfig {
 
     for(store: string) {
         return StoreConfig.getInstance().storeConfig.get(store);
+    }
+
+    add(configs: [{store:string, storeConfig: Partial<TStoreParameters> }]) {
+        configs.forEach(config => {
+            StoreConfig.instance.storeConfig.add(config.store, config.storeConfig);
+        })
     }
 }
 

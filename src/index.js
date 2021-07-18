@@ -4,8 +4,6 @@ import {IDBRepository} from "./repositories/IDBRepository";
 import {Entity} from "./entities";
 import {Index, Store} from "./driver/indexeddb.decorator";
 
-import * as decorator from "./decorator"
-
 export {
-    IDBClient, StoreConfig, IDBRepository, decorator, Entity, Index, Store
+    IDBClient, StoreConfig, IDBRepository,  Entity, Index, Store
 }

@@ -49,10 +49,34 @@ export class IDBRepository<T extends Entity> implements IWrite<T>, IRead<T> {
         return new Promise(resolve => resolve(true));
     }
 
+    async deleteAll(items?: T[]): Promise<T[]> {
+        if (!items)
+            await this.clear()
+        else
+            await items.reduce(async (prevPromise: Promise<T>, next: T) => {
+                await prevPromise;
+                log.debug("updating: ", next)
+                return await this.delete(next.id);
+            }, new Promise<T>((resolve => resolve(items[0]))));
+        return new Promise(resolve => resolve(true));
+    }
+
     async delete(id: string | number): Promise<boolean> {
         const storeTransaction = await this.dbClient.storeTransaction(this.storeName, "readwrite");
         return new Promise(((resolve, reject) => {
             const request = storeTransaction.delete(id);
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => {
+                log.debug(request.error);
+                resolve(false);
+            };
+        }));
+    }
+
+    async clear(): Promise<boolean> {
+        const storeTransaction = await this.dbClient.storeTransaction(this.storeName, "readwrite");
+        return new Promise(((resolve, reject) => {
+            const request = storeTransaction.clear();
             request.onsuccess = () => resolve(true);
             request.onerror = () => {
                 log.debug(request.error);
@@ -79,6 +103,20 @@ export class IDBRepository<T extends Entity> implements IWrite<T>, IRead<T> {
         return new Promise(((resolve, reject) => {
             const request = storeTransaction.get(id);
             request.onsuccess = () => resolve(this.transform(request.result));
+            request.onerror = () => {
+                reject(request.error)
+            };
+        }));
+    }
+
+    async getByIndex(index: { ["indexName"]: IDBValidKey }): Promise<T[]> {
+        const storeTransaction = await this.dbClient.storeTransaction(this.storeName);
+        return new Promise(((resolve, reject) => {
+            let indexName = Object.keys(index)[0];
+            const request = storeTransaction.index(indexName).getAll();
+            request.onsuccess = () => resolve(request.result.map(res => {
+                return this.transform(res)
+            }));
             request.onerror = () => {
                 reject(request.error)
             };
@@ -117,8 +155,7 @@ export class IDBRepository<T extends Entity> implements IWrite<T>, IRead<T> {
         return Object.assign(newObj, object);
     }
 
-    private getType(){
+    private getType() {
         return typeof this.repository == "string" ? EntityObject : this.repository;
-
     }
 }

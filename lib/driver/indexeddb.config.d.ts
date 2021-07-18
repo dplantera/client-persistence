@@ -9,13 +9,17 @@ export declare type TStoreParameters = IDBObjectStoreParameters & {
     indices?: Array<TStoreIndex>;
 };
 export declare class StoreConfig {
-    static readonly NAME_DB_DEFAULT = "default_db";
+    static NAME_DB_DEFAULT: string;
     private static instance;
     private storeConfig;
     private constructor();
     static getInstance(): StoreConfig;
     private static init;
     for(store: string): any;
+    add(configs: [{
+        store: string;
+        storeConfig: Partial<TStoreParameters>;
+    }]): void;
 }
 export interface IStoreConfig {
     add(storeName: string, config: Partial<TStoreParameters>): IStoreConfig;

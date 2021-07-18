@@ -10,9 +10,14 @@ export declare class IDBRepository<T extends Entity> implements IWrite<T>, IRead
     create(item: T): Promise<T>;
     createAll(items: T[]): Promise<T[]>;
     updateAll(items: T[]): Promise<T[]>;
+    deleteAll(items?: T[]): Promise<T[]>;
     delete(id: string | number): Promise<boolean>;
+    clear(): Promise<boolean>;
     update(item: T, id?: string | number): Promise<boolean>;
     getById(id: string | number | any[]): Promise<T>;
+    getByIndex(index: {
+        ["indexName"]: IDBValidKey;
+    }): Promise<T[]>;
     get(query: IDBValidKey | IDBKeyRange): Promise<T[]>;
     getAll(): Promise<T[]>;
     private transform;
