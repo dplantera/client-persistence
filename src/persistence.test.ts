@@ -201,4 +201,31 @@ test("test js context - manual store config", async () => {
     expect(fooGetDbResult).toEqual(foo);
 })
 
+test("test js context - manual store config with index", async () => {
+    const Foo = (id: number, refForIdx: IDBValidKey, data: string) => {
+        return {id: id, refForIdx: refForIdx, data: data}
+    }
+    let fooStoreConfig = StoreConfig.getInstance().for(Foo.name);
+    fooStoreConfig.database = "test-foo-db";
+    fooStoreConfig.autoIncrement = false;
+    fooStoreConfig.keyPath = ["id"];
+    fooStoreConfig.indices = [{name: "refForIdx"}]
+
+    const fooRepo = new IDBRepository(Foo.name);
+    const foo = Foo(111, "ab", "test data foo");
+    await fooRepo.create(foo);
+
+    // one result
+    let fooGetDbResult = await fooRepo.getByIndex({refForIdx: "ab"});
+    expect(fooGetDbResult).toEqual([foo]);
+    // no result
+    fooGetDbResult = await fooRepo.getByIndex({refForIdx: "a"});
+    expect(fooGetDbResult).toEqual([]);
+    // multiple result
+    const bar = Foo(112, "ab", "test data bar");
+    await fooRepo.create(bar);
+    fooGetDbResult = await fooRepo.getByIndex({refForIdx: "ab"});
+    expect(fooGetDbResult).toEqual([foo, bar]);
+})
+
 export {}

@@ -109,11 +109,12 @@ export class IDBRepository<T extends Entity> implements IWrite<T>, IRead<T> {
         }));
     }
 
-    async getByIndex(index: { ["indexName"]: IDBValidKey }): Promise<T[]> {
+    async getByIndex(index: { [indexName: string]: IDBValidKey | IDBKeyRange }): Promise<T[]> {
         const storeTransaction = await this.dbClient.storeTransaction(this.storeName);
         return new Promise(((resolve, reject) => {
             let indexName = Object.keys(index)[0];
-            const request = storeTransaction.index(indexName).getAll();
+            let indexKey = index[indexName];
+            const request = storeTransaction.index(indexName).getAll(indexKey);
             request.onsuccess = () => resolve(request.result.map(res => {
                 return this.transform(res)
             }));

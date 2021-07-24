@@ -16,7 +16,7 @@ export declare class IDBRepository<T extends Entity> implements IWrite<T>, IRead
     update(item: T, id?: string | number): Promise<boolean>;
     getById(id: string | number | any[]): Promise<T>;
     getByIndex(index: {
-        ["indexName"]: IDBValidKey;
+        [indexName: string]: IDBValidKey | IDBKeyRange;
     }): Promise<T[]>;
     get(query: IDBValidKey | IDBKeyRange): Promise<T[]>;
     getAll(): Promise<T[]>;
