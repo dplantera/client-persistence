@@ -1,5 +1,5 @@
 
-interface ILogger{
+export interface ILogger{
     log(...data: any[]): void;
     info(...data: any[]): void;
     warn(...data: any[]): void;

@@ -1,4 +1,4 @@
-interface ILogger {
+export interface ILogger {
     log(...data: any[]): void;
     info(...data: any[]): void;
     warn(...data: any[]): void;
@@ -15,4 +15,3 @@ interface ILogger {
 export declare let log: ILogger;
 export declare function getLogger(name: string): ILogger;
 export declare function setLogger(logger: ILogger): void;
-export {};
