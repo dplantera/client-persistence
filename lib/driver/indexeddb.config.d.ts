@@ -15,7 +15,7 @@ export declare class StoreConfig {
     private constructor();
     static getInstance(): StoreConfig;
     private static init;
-    for(store: string): any;
+    for(store: string): TStoreParameters;
     add(configs: [{
         store: string;
         storeConfig: Partial<TStoreParameters>;
@@ -23,5 +23,5 @@ export declare class StoreConfig {
 }
 export interface IStoreConfig {
     add(storeName: string, config: Partial<TStoreParameters>): IStoreConfig;
-    get(store: string): any;
+    get(store: string): TStoreParameters;
 }

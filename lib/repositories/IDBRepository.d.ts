@@ -20,6 +20,7 @@ export declare class IDBRepository<T extends Entity> implements IWrite<T>, IRead
     }): Promise<T[]>;
     get(query: IDBValidKey | IDBKeyRange): Promise<T[]>;
     getAll(): Promise<T[]>;
+    getLast(): Promise<T>;
     private transform;
     private getType;
 }
