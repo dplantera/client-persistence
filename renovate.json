@@ -6,13 +6,14 @@
   "js": {},
   "packageRules": [
     {
-      "matchPackagePatterns": ["^@types/"],
+      "groupName": "jest",
+      "matchPackagePatterns": ["jest"],
       "automerge": true,
       "major": {
         "automerge": false
       },
-      "automergeType": "pr-comment",
-      "automergeComment": "bors: r+"
+      "automergeType": "automerge type: update jest",
+      "automergeComment": "automerge comment: update jest"
     },
     {
       "matchPackagePatterns": ["eslint"],
