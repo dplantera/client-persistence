@@ -7,225 +7,231 @@ import {StoreConfig} from "./driver/indexeddb.config";
 
 require("fake-indexeddb/auto");
 
-
-// const dataStoreConfig = StoreConfig.getInstance().for("data");
-// dataStoreConfig.autoIncrement = true;
-
 let indexedDbClient = new IDBClient();
 
-beforeEach(async () => {
-    await indexedDbClient.deleteDb()
-})
+describe("persistence tests", () => {
+    beforeEach(async () => {
+        await indexedDbClient.deleteDb();
+    })
 
-test('test crud operations on an object', async () => {
-    type Data = { attrNum: number, attrStr: string } & Entity
-    const data: Data = {id: undefined, attrNum: 1, attrStr: "test"};
-    const storeData = new IDBRepository<Data>("data", indexedDbClient);
+    test('test crud operations on an object', async () => {
+        type Data = { attrNum: number, attrStr: string } & Entity
+        const data: Data = {id: undefined, attrNum: 1, attrStr: "test"};
+        const storeData = new IDBRepository<Data>("data", indexedDbClient);
 
-    // create
-    const storedDate = await storeData.create(data);
-    expect(storedDate.id).toBe(1);
-    //read
-    let foundData = await storeData.getById(1);
-    expect(foundData.id).toBe(1);
-    expect(foundData.attrNum).toBe(1);
-    expect(foundData.attrStr).toBe("test");
-    expect(storeData.dbClient.version.get()).toBe(2);
-    //update
-    foundData.attrNum = 2;
-    foundData.attrStr = "test updated";
+        // create
+        const storedDate = await storeData.create(data);
+        expect(storedDate.id).toBe(1);
+        //read
+        let foundData = await storeData.getById(1);
+        expect(foundData.id).toBe(1);
+        expect(foundData.attrNum).toBe(1);
+        expect(foundData.attrStr).toBe("test");
+        expect(storeData.dbClient.version.get()).toBe(2);
+        //update
+        foundData.attrNum = 2;
+        foundData.attrStr = "test updated";
 
-    let uptData = await storeData.update(foundData)
-    expect(uptData).toBe(true);
+        let uptData = await storeData.update(foundData)
+        expect(uptData).toBe(true);
 
-    foundData = await storeData.getById(1);
-    expect(foundData.id).toBe(1);
-    expect(foundData.attrNum).toBe(2);
-    expect(foundData.attrStr).toBe("test updated");
-    // _id:undefined TS Workaround for IDB
-    const forUpdate = {id: undefined, ...foundData, attrStr: "test partial upt"};
-    uptData = await storeData.update(forUpdate);
-    expect(uptData).toBe(true);
+        foundData = await storeData.getById(1);
+        expect(foundData.id).toBe(1);
+        expect(foundData.attrNum).toBe(2);
+        expect(foundData.attrStr).toBe("test updated");
+        // _id:undefined TS Workaround for IDB
+        const forUpdate = {...foundData, attrStr: "test partial upt"};
+        uptData = await storeData.update(forUpdate);
+        expect(uptData).toBe(true);
 
-    foundData = await storeData.getById(1);
-    expect(foundData.id).toBe(1);
-    expect(foundData.attrNum).toBe(2);
-    expect(foundData.attrStr).toBe("test partial upt");
-    //delete
-    const deleted = await storeData.delete(1);
-    expect(deleted).toBe(true);
+        foundData = await storeData.getById(1);
+        expect(foundData.id).toBe(1);
+        expect(foundData.attrNum).toBe(2);
+        expect(foundData.attrStr).toBe("test partial upt");
+        //delete
+        const deleted = await storeData.delete(1);
+        expect(deleted).toBe(true);
 
-    foundData = await storeData.getById(1);
-    expect(foundData).toBe(undefined);
-})
+        foundData = await storeData.getById(1);
+        expect(foundData).toBe(undefined);
+    })
 
-test('create multiply objects of same type', async () => {
-    jest.setTimeout(20000)
-    type Data = { attrNum: number, attrStr: string } & Entity
-    const data: Data[] = [];
+    test('create multiply objects of same type', async () => {
+        jest.setTimeout(20000)
+        type Data = { attrNum: number, attrStr: string } & Entity
+        const data: Data[] = [];
 
-    for (let i = 0; i < 20; i++) {
-        data.push({id: undefined, attrNum: i, attrStr: "test-" + i})
-    }
-
-    const storeData = new IDBRepository<Data>("data", indexedDbClient);
-
-    const storedDate = await storeData.createAll(data);
-    expect(storedDate.length).toBe(data.length);
-    for (let i = 0; i < 20; i++) {
-        expect(storedDate[i].id).toBe(i + 1);
-        expect(storedDate[i].attrNum).toBe(i);
-        expect(storedDate[i].attrStr).toBe("test-" + i);
-    }
-
-    try {
-        const existing = await storeData.create(storedDate[0]);
-        fail("should raise ConstraintException: \n" + JSON.stringify(existing))
-    } catch (err) {
-        expect(err.name).toBe("ConstraintError");
-    }
-})
-
-test('create multiply objects and stores of different type', async () => {
-    type Data = { attrNum: number, attrStr: string } & Entity
-    type DataTwo = { attrNum: number } & Entity
-    type DataThree = { attrNum: number, attrBool: boolean } & Entity
-
-    const dataStore = new IDBRepository("data", indexedDbClient);
-    const dataTwoStore = new IDBRepository("data-two", indexedDbClient);
-    const dataThreeStore = new IDBRepository("data-three", indexedDbClient);
-
-    const data: Data = {id: undefined, attrNum: 1, attrStr: "test data"};
-
-    let created = await dataStore.create(data);
-    expect(created.id).toBe(1);
-    expect(dataStore.dbClient.version.get()).toBe(2);
-
-    const data2: DataTwo = {id: undefined, attrNum: 2};
-    created = await dataTwoStore.create(data2);
-    expect(created.id).toBe(1);
-    expect(dataTwoStore.dbClient.version.get()).toBe(3);
-
-    const data3: DataThree = {id: undefined, attrNum: 3, attrBool: true};
-    created = await dataThreeStore.create(data3);
-    expect(created.id).toBe(1);
-    expect(dataThreeStore.dbClient.version.get()).toBe(4);
-})
-
-test("class without decorator", async () => {
-    class Data extends Entity {
-        static map = new Map();
-
-        constructor(public attrNum: number, public attrStr: string) {
-            super();
-            Data.map.set("test", 1);
-        }
-    }
-
-    const data = new Data(1, "test");
-    const dataStore = new IDBRepository(Data, indexedDbClient);
-    const created = await dataStore.create(data);
-    expect(created.id).toBe(1);
-    expect(dataStore.dbClient.version.get()).toBe(2);
-
-    let foundData = await dataStore.getById(1);
-    expect(foundData.id).toBe(1);
-    expect(foundData).toBeInstanceOf(Data)
-})
-
-test("class with decorator", async () => {
-    @Store()
-    class DataDecorated extends Entity {
-        attrNum: number;
-        @Index()
-        attrStr: string;
-
-        constructor(attrNum: number, attrStr: string) {
-            super();
-            this.attrNum = attrNum;
-            this.attrStr = attrStr;
-        }
-    }
-
-    const data = new DataDecorated(1, "test2");
-    const dataDecorated = new IDBRepository(DataDecorated, indexedDbClient);
-    const created = await dataDecorated.create(data);
-    expect(created.id).toBe(1);
-    expect(dataDecorated.dbClient.version.get()).toBe(2);
-
-    let foundData = await dataDecorated.getById(1);
-    expect(foundData.id).toBe(1);
-    expect(foundData).toBeInstanceOf(DataDecorated)
-})
-
-test("newable", () => {
-    class Generic<T> {
-        constructor(public type: Newable<T>) {
+        for (let i = 0; i < 20; i++) {
+            data.push({id: undefined, attrNum: i, attrStr: "test-" + i})
         }
 
-        transform(object: T) {
-            const newObj = Object.create(this.type.prototype);
-            return Object.assign(newObj, object);
+        const storeData = new IDBRepository<Data>("data", indexedDbClient);
+
+        const storedDate = await storeData.createAll(data);
+        expect(storedDate.length).toBe(data.length);
+        for (let i = 0; i < 20; i++) {
+            expect(storedDate[i].id).toBe(i + 1);
+            expect(storedDate[i].attrNum).toBe(i);
+            expect(storedDate[i].attrStr).toBe("test-" + i);
         }
-    }
 
-    class Data extends Entity {
-        static map = new Map();
-
-        constructor(public attrNum: number, public attrStr: string) {
-            super();
-            Data.map.set("test", 1);
+        try {
+            const existing = await storeData.create(storedDate[0]);
+            fail("should raise ConstraintException: \n" + JSON.stringify(existing))
+        } catch (err) {
+            if(err instanceof Error)
+                expect(err.name).toBe("ConstraintError");
         }
-    }
+    })
 
-    const generic = new Generic<Data>(Data);
-    const obj = generic.transform({id: undefined, attrNum: 1, attrStr: "test-attr"})
-    expect(obj).toBeInstanceOf(Data)
-})
+    test('create multiply objects and stores of different type', async () => {
+        type Data = { attrNum: number, attrStr: string } & Entity
+        type DataTwo = { attrNum: number } & Entity
+        type DataThree = { attrNum: number, attrBool: boolean } & Entity
+
+        const dataStore = new IDBRepository("data", indexedDbClient);
+        const dataTwoStore = new IDBRepository("data-two", indexedDbClient);
+        const dataThreeStore = new IDBRepository("data-three", indexedDbClient);
+
+        const data: Data = {id: undefined, attrNum: 1, attrStr: "test data"};
+
+        let created = await dataStore.create(data);
+        expect(created.id).toBe(1);
+        expect(dataStore.dbClient.version.get()).toBe(2);
+
+        const data2: DataTwo = {id: undefined, attrNum: 2};
+        created = await dataTwoStore.create(data2);
+        expect(created.id).toBe(1);
+        expect(dataTwoStore.dbClient.version.get()).toBe(3);
+
+        const data3: DataThree = {id: undefined, attrNum: 3, attrBool: true};
+        created = await dataThreeStore.create(data3);
+        expect(created.id).toBe(1);
+        expect(dataThreeStore.dbClient.version.get()).toBe(4);
+    })
+
+    test("class without decorator", async () => {
+        class Data extends Entity {
+            static map = new Map();
+
+            constructor(public attrNum: number, public attrStr: string) {
+                super();
+                Data.map.set("test", 1);
+            }
+        }
+
+        const data = new Data(1, "test");
+        const dataStore = new IDBRepository(Data, indexedDbClient);
+        const created = await dataStore.create(data);
+        expect(created.id).toBe(1);
+        expect(dataStore.dbClient.version.get()).toBe(2);
+
+        let foundData = await dataStore.getById(1);
+        expect(foundData.id).toBe(1);
+        expect(foundData).toBeInstanceOf(Data)
+    })
+
+    test("class with decorator", async () => {
+        @Store()
+        class DataDecorated extends Entity {
+            attrNum: number;
+            @Index()
+            attrStr: string;
+
+            constructor(attrNum: number, attrStr: string) {
+                super();
+                this.attrNum = attrNum;
+                this.attrStr = attrStr;
+            }
+        }
+
+        const data = new DataDecorated(1, "test2");
+        const dataDecorated = new IDBRepository(DataDecorated, indexedDbClient);
+        const created = await dataDecorated.create(data);
+        expect(created.id).toBe(1);
+        expect(dataDecorated.dbClient.version.get()).toBe(2);
+
+        let foundData = await dataDecorated.getById(1);
+        expect(foundData.id).toBe(1);
+        expect(foundData).toBeInstanceOf(DataDecorated)
+    })
+
+    test("newable", () => {
+        class Generic<T> {
+            constructor(public type: Newable<T>) {
+            }
+
+            transform(object: T) {
+                const newObj = Object.create(this.type.prototype);
+                return Object.assign(newObj, object);
+            }
+        }
+
+        class Data extends Entity {
+            static map = new Map();
+
+            constructor(public attrNum: number, public attrStr: string) {
+                super();
+                Data.map.set("test", 1);
+            }
+        }
+
+        const generic = new Generic<Data>(Data);
+        const obj = generic.transform({id: undefined, attrNum: 1, attrStr: "test-attr"})
+        expect(obj).toBeInstanceOf(Data)
+    })
 
 
-test("test js context - manual store config", async () => {
-    const Foo = (id: number, partiakPk: string, data: string) => {
-        return {id: id, partialPk: partiakPk, data: data}
-    }
-    let fooStoreConfig = StoreConfig.getInstance().for(Foo.name);
-    fooStoreConfig.database = "test-foo-db";
-    fooStoreConfig.autoIncrement = false;
-    fooStoreConfig.keyPath = ["id", "partialPk"];
+    test("test js context - manual store config", async () => {
+        const Foo = (id: number, partiakPk: string, data: string) => {
+            return {id: id, partialPk: partiakPk, data: data}
+        }
+        let repoName = Foo.name;
+        let fooStoreConfig = StoreConfig.getInstance().for(repoName);
+        fooStoreConfig.database = "MyMaybeUniquePersonalDatabase";
+        fooStoreConfig.autoIncrement = false;
+        fooStoreConfig.keyPath = ["id", "partialPk"];
 
-    const fooRepo = new IDBRepository(Foo.name);
-    const foo = Foo(111, "ab", "test data");
-    await fooRepo.create(foo);
+        const fooRepo = new IDBRepository(repoName);
+        const foo = Foo(111, "ab", "test data");
+        await fooRepo.create(foo);
 
-    const fooGetDbResult = await fooRepo.getById([111, "ab"]);
-    expect(fooGetDbResult).toEqual(foo);
-})
+        const fooGetDbResult = await fooRepo.getById([111, "ab"]);
+        expect(fooGetDbResult).toEqual(foo);
 
-test("test js context - manual store config with index", async () => {
-    const Foo = (id: number, refForIdx: IDBValidKey, data: string) => {
-        return {id: id, refForIdx: refForIdx, data: data}
-    }
-    let fooStoreConfig = StoreConfig.getInstance().for(Foo.name);
-    fooStoreConfig.database = "test-foo-db";
-    fooStoreConfig.autoIncrement = false;
-    fooStoreConfig.keyPath = ["id"];
-    fooStoreConfig.indices = [{name: "refForIdx"}]
+        //clean database here because the name is not public
+        await fooRepo.dbClient.deleteDb(fooStoreConfig.database);
+    })
 
-    const fooRepo = new IDBRepository(Foo.name);
-    const foo = Foo(111, "ab", "test data foo");
-    await fooRepo.create(foo);
+    test("test js context - manual store config with index", async () => {
+        const Foo = (id: number, refForIdx: IDBValidKey, data: string) => {
+            return {id: id, refForIdx: refForIdx, data: data}
+        }
+        let fooStoreConfig = StoreConfig.getInstance().for(Foo.name);
+        fooStoreConfig.database = "MyMaybeUniquePersonalDatabase";
+        fooStoreConfig.autoIncrement = false;
+        fooStoreConfig.keyPath = ["id"];
+        fooStoreConfig.indices = [{name: "refForIdx"}]
 
-    // one result
-    let fooGetDbResult = await fooRepo.getByIndex({refForIdx: "ab"});
-    expect(fooGetDbResult).toEqual([foo]);
-    // no result
-    fooGetDbResult = await fooRepo.getByIndex({refForIdx: "a"});
-    expect(fooGetDbResult).toEqual([]);
-    // multiple result
-    const bar = Foo(112, "ab", "test data bar");
-    await fooRepo.create(bar);
-    fooGetDbResult = await fooRepo.getByIndex({refForIdx: "ab"});
-    expect(fooGetDbResult).toEqual([foo, bar]);
+        const fooRepo = new IDBRepository(Foo.name);
+        const foo = Foo(111, "ab", "test data foo");
+        await fooRepo.create(foo);
+
+        // one result
+        let fooGetDbResult = await fooRepo.getByIndex({refForIdx: "ab"});
+        expect(fooGetDbResult).toEqual([foo]);
+        // no result
+        fooGetDbResult = await fooRepo.getByIndex({refForIdx: "a"});
+        expect(fooGetDbResult).toEqual([]);
+        // multiple result
+        const bar = Foo(112, "ab", "test data bar");
+        await fooRepo.create(bar);
+        fooGetDbResult = await fooRepo.getByIndex({refForIdx: "ab"});
+        expect(fooGetDbResult).toEqual([foo, bar]);
+
+        //clean database here because the name is not public
+        await fooRepo.dbClient.deleteDb(fooStoreConfig.database);
+    })
 })
 
 export {}
