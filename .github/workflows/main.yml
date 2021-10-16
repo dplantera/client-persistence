@@ -1,4 +1,4 @@
-name: Build Types
+name: Compile TS and run tests
 
 on:
   push:
@@ -13,6 +13,8 @@ jobs:
     strategy:
       matrix:
         node-version: [ 15.x ]
+
+    name: Compile TS and run tests - Node.js ${{ matrix.node-version }}
 
     steps:
       - uses: actions/checkout@v2
