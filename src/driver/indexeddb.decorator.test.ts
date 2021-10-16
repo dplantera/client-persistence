@@ -34,7 +34,7 @@ class OtherObj {
 test("decorator for indexed db", () => {
     const storeConfigTestObj = StoreConfig.getInstance().for(TestObj.name);
     expect(storeConfigTestObj.indices).toEqual([{name: "name"}]);
-    expect(storeConfigTestObj.keyPath).toEqual(["id"]);
+    expect(storeConfigTestObj.keyPath).toEqual("id");
     expect(storeConfigTestObj.database).toBe(StoreConfig.NAME_DB_DEFAULT);
     expect(storeConfigTestObj.autoIncrement).toBe(true);
 

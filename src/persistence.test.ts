@@ -1,8 +1,8 @@
-import {Entity} from "./entities";
+import {Entity, IEntity} from "./entities";
 import {IDBRepository} from "./repositories/IDBRepository";
 import {IDBClient} from "./driver/IDBClient";
 import {Newable} from "./repositories/interfaces";
-import {Index, Store} from "./driver/indexeddb.decorator";
+import {Index, PrimaryKey, Store} from "./driver/indexeddb.decorator";
 import {StoreConfig} from "./driver/indexeddb.config";
 
 require("fake-indexeddb/auto");
@@ -79,7 +79,7 @@ describe("persistence tests", () => {
             const existing = await storeData.create(storedDate[0]);
             fail("should raise ConstraintException: \n" + JSON.stringify(existing))
         } catch (err) {
-            if(err instanceof Error)
+            if (err instanceof Error)
                 expect(err.name).toBe("ConstraintError");
         }
     })
@@ -131,30 +131,6 @@ describe("persistence tests", () => {
         expect(foundData).toBeInstanceOf(Data)
     })
 
-    test("class with decorator", async () => {
-        @Store()
-        class DataDecorated extends Entity {
-            attrNum: number;
-            @Index()
-            attrStr: string;
-
-            constructor(attrNum: number, attrStr: string) {
-                super();
-                this.attrNum = attrNum;
-                this.attrStr = attrStr;
-            }
-        }
-
-        const data = new DataDecorated(1, "test2");
-        const dataDecorated = new IDBRepository(DataDecorated, indexedDbClient);
-        const created = await dataDecorated.create(data);
-        expect(created.id).toBe(1);
-        expect(dataDecorated.dbClient.version.get()).toBe(2);
-
-        let foundData = await dataDecorated.getById(1);
-        expect(foundData.id).toBe(1);
-        expect(foundData).toBeInstanceOf(DataDecorated)
-    })
 
     test("newable", () => {
         class Generic<T> {
@@ -231,6 +207,67 @@ describe("persistence tests", () => {
 
         //clean database here because the name is not public
         await fooRepo.dbClient.deleteDb(fooStoreConfig.database);
+    })
+})
+
+
+describe("Persist with configuration", () => {
+    @Store()
+    class DataDecorated extends Entity {
+        attrNum: number;
+        @Index()
+        attrStr: string;
+
+        constructor(attrNum: number, attrStr: string) {
+            super();
+            this.attrNum = attrNum;
+            this.attrStr = attrStr;
+        }
+    }
+
+    @Store({database: "OptionalTargetDatabaseName", name: "OptionalDataStoreName"})
+    class DataDecoratedWithConfig implements IEntity {
+        @PrimaryKey({autoIncrement: false})
+        id: number | undefined
+        @PrimaryKey()
+        compositeId: string | undefined
+        @Index()
+        attrStr: string;
+
+        constructor(public attrNum: number, attrStr: string) {
+            this.attrStr = attrStr;
+        }
+    }
+
+    beforeEach(() => {
+        indexedDbClient.deleteDb();
+    })
+
+    test("class with decorator", async () => {
+
+        const data = new DataDecorated(1, "test2");
+        const dataDecorated = new IDBRepository(DataDecorated);
+        const created = await dataDecorated.create(data);
+        expect(created.id).toBe(1);
+        expect(dataDecorated.dbClient.version.get()).toBe(2);
+
+        let foundData = await dataDecorated.getById(1);
+        expect(foundData.id).toBe(1);
+        expect(foundData).toBeInstanceOf(DataDecorated)
+        expect(foundData).toEqual(data)
+        expect(await dataDecorated.getByIndex({attrStr: "test2"})).toEqual([data])
+    })
+
+    test("class with decorator and config", async () => {
+        const data = new DataDecoratedWithConfig(11, "test2");
+        data.id = 123
+        data.compositeId = "some-id-part";
+
+        const dataDecoratedWithConfigRepo = new IDBRepository(DataDecoratedWithConfig);
+        await dataDecoratedWithConfigRepo.create(data);
+        let foundData = await dataDecoratedWithConfigRepo.getById([123, "some-id-part"]);
+        const expected: DataDecoratedWithConfig = {id: 123, compositeId: "some-id-part", attrNum: 11, attrStr: "test2"}
+        expect(foundData).toEqual(expected)
     })
 })
 
