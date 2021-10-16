@@ -1,6 +1,10 @@
 import {PrimaryKey} from "./driver/indexeddb.decorator";
 
-export abstract class Entity {
+export interface IEntity {
+    id: string | number | undefined;
+}
+
+export abstract class Entity implements IEntity {
     @PrimaryKey({autoIncrement: false})
     public id: string | number | undefined;
 }

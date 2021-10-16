@@ -46,7 +46,7 @@ export class StoreConfig {
 export interface IStoreConfig {
     add(storeName: string, config: Partial<TStoreParameters>): IStoreConfig;
 
-    get(store: string): any;
+    get(store: string): TStoreParameters;
 }
 
 class IDBStoreConfig implements IStoreConfig {
