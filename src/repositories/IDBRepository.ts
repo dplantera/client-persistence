@@ -148,6 +148,15 @@ export class IDBRepository<T extends Entity> implements IWrite<T>, IRead<T> {
         }));
     }
 
+    async getLast(): Promise<T> {
+        const storeTransaction = await this.dbClient.storeTransaction(this.storeName);
+        return new Promise(((resolve, reject) => {
+            const request = storeTransaction.openCursor(null, "prev");
+            request.onsuccess = () => resolve(request.result.value);
+            request.onerror = () => reject(request.error);
+        }));
+    }
+
     private transform(object: T) {
         if (!object)
             return object;
