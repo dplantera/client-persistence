@@ -5,7 +5,7 @@ export interface ILogger{
     warn(...data: any[]): void;
     error(...data: any[]): void;
     debug(...data: any[]): void;
-    exception(message?: string, ...optionalParams: any[]): void;
+    exception?(message?: string, ...optionalParams: any[]): void;
     table(tabularData?: any, properties?: string[]): void;
     trace(...data: any[]): void;
     time(label?: string): void;
