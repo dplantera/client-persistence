@@ -1,6 +1,6 @@
 {
   "name": "client-persistence",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Utils for client side persistence",
   "main": "./lib/index.js",
   "scripts": {
