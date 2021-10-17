@@ -20,20 +20,10 @@ describe("IDBRepository", () => {
         const entityB = new TestEntity("entityB");
 
         const testEntityRepo = new IDBRepository(TestEntity);
-        console.log({
-                before: entityB,
-            }
-        )
-
         const savedEntities = await testEntityRepo.createAll([entityA, entityB]);
         expect(savedEntities.length).toBe(2);
 
         const lastEntry = await testEntityRepo.getLast();
-        console.log({
-                before: entityB,
-                after: lastEntry
-            }
-        )
         expect(lastEntry.id).toBe(2);
     })
 })
