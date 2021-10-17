@@ -36,5 +36,8 @@ jobs:
         with:
           default_author: github_actions
 
+      - name: Bumb version in package.json
+        uses: maks-stupak/gh-action-bump-version@v7.1.5
+
 
 
