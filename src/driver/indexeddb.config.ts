@@ -6,7 +6,17 @@ export type TStoreParameters =
     & { database: string, name?: string, indices?: Array<TStoreIndex> };
 
 export class StoreConfig {
-    public static NAME_DB_DEFAULT = "default_db";
+    private static __DEFAULT_DB_NAME = "default_db";
+
+    public static get NAME_DB_DEFAULT() {
+        return StoreConfig.__DEFAULT_DB_NAME;
+    };
+
+    public static set NAME_DB_DEFAULT(databaseName) {
+        StoreConfig.__DEFAULT_DB_NAME = databaseName;
+        this.getInstance().storeConfig.switchDatabase(databaseName);
+    };
+
     private static instance: StoreConfig;
     private storeConfig: IStoreConfig;
 
@@ -36,7 +46,7 @@ export class StoreConfig {
         return StoreConfig.getInstance().storeConfig.get(store);
     }
 
-    add(configs: [{store:string, storeConfig: Partial<TStoreParameters> }]) {
+    add(configs: [{ store: string, storeConfig: Partial<TStoreParameters> }]) {
         configs.forEach(config => {
             StoreConfig.instance.storeConfig.add(config.store, config.storeConfig);
         })
@@ -47,6 +57,8 @@ export interface IStoreConfig {
     add(storeName: string, config: Partial<TStoreParameters>): IStoreConfig;
 
     get(store: string): TStoreParameters;
+
+    switchDatabase(database: string): void;
 }
 
 class IDBStoreConfig implements IStoreConfig {
@@ -59,6 +71,10 @@ class IDBStoreConfig implements IStoreConfig {
             autoIncrement: true,
             database: defaultDbName
         }
+    }
+
+    switchDatabase(database: string) {
+        this.storeParamsDefault.database = database;
     }
 
     add(storeName: string, config: Partial<TStoreParameters> = this.storeParamsDefault) {
