@@ -38,7 +38,7 @@ jobs:
 
       - name: Automated Version Bump
         if: github.ref == 'refs/heads/main'
-        uses: phips28/gh-action-bump-version@v9.0.8
+        uses: phips28/gh-action-bump-version@v9.0.13
         with:
           minor-wording:  'add,Adds,new,Added'
           major-wording:  'MAJOR,cut-major,breaking-change'
