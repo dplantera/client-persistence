@@ -5,8 +5,10 @@
   "main": "./lib/index.js",
   "scripts": {
     "test": "jest",
+    "dev": "nodemon",
     "test:watch": "jest --watchAll",
-    "build": "tsc --build --clean && tsc -p tsconfig.json"
+    "build": "tsc --build --clean && tsc -p tsconfig.json",
+    "compile": "tsc -p tsconfig.json"
   },
   "author": "",
   "license": "MIT",
