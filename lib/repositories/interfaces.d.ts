@@ -1,4 +1,4 @@
-export declare type Newable<T> = {
+export type Newable<T> = {
     new (...args: any[]): T;
 };
 export interface IRead<T> {
