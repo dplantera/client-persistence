@@ -1,5 +1,5 @@
-declare type ClassDecoratorFactory = (...args: any) => (constructor: Function) => any;
-declare type PropertyDecoratorFactory = (...args: any) => (target: any, propertyKey: string) => any;
+type ClassDecoratorFactory = (...args: any) => (constructor: Function) => any;
+type PropertyDecoratorFactory = (...args: any) => (target: any, propertyKey: string) => any;
 interface IStoreDecorator extends ClassDecoratorFactory {
     (args: {
         name?: string;

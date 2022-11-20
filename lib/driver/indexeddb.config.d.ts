@@ -1,9 +1,9 @@
-export declare type TStoreIndex = {
+export type TStoreIndex = {
     name: string;
     keyPath?: string | string[];
     options?: IDBIndexParameters;
 };
-export declare type TStoreParameters = IDBObjectStoreParameters & {
+export type TStoreParameters = IDBObjectStoreParameters & {
     database: string;
     name?: string;
     indices?: Array<TStoreIndex>;
